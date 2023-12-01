@@ -11,7 +11,7 @@ OptionParser.new do |parser|
   end
 end.parse!
 
-digit_tokens = ('0'..'9').map(&:to_s)
+digit_tokens = ('0'..'9').to_a
 word_tokens = %w[
     zero
     one
