@@ -150,10 +150,21 @@ class Schematic
       end
     end
 
+    unless current_span.nil? then
+      spans << current_span
+    end
+
     spans
   end
 end
 
 
 schematic = Schematic.parse(ARGF)
-puts schematic.part_numbers.map(&:number).sum
+#part_numbers = schematic.part_numbers
+#schematic.number_spans.each do |s|
+#  is_part = part_numbers.include?(s) ? "*" : " "
+#  #puts "#{is_part} #{s.number}"
+#end
+
+puts "Part Number sum: #{schematic.part_numbers.map(&:number).sum}"
+puts "All Number sum: #{schematic.number_spans.map(&:number).sum}"
