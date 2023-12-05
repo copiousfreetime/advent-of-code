@@ -35,17 +35,27 @@ class Map
     @map_ranges = []
   end
 
-  def [](value)
-    covering_range = map_ranges.find { |map_range| map_range.cover?(value) }
-    if covering_range then
-      covering_range[value]
-    else
-      value
+  def [](input)
+    case input
+    when Numeric
+      lookup_number(input)
+    when Range
+      lookup_range(input)
     end
+  end
+
+  def lookup_number(input)
+    covering_range = map_ranges.find { |map_range| map_range.cover?(input) }
+    value = if covering_range then
+      covering_range[input]
+    else
+      input
+    end
+    value
   end
 end
 
-class AlmanacBase
+class Almanac
   attr_accessor :seeds
   attr_accessor :maps
 
@@ -75,6 +85,6 @@ class AlmanacBase
   end
 
   def lowest_location
-    raise NotImplentedError, "#{self.class} must implement #lowest_locations"
+    seeds.map { |seed| lookup(input: seed) }.min
   end
 end

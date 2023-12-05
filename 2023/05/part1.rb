@@ -2,12 +2,6 @@
 require 'debug'
 require_relative "./common"
 
-class Almanac < AlmanacBase
-  def lowest_location
-    seeds.map { |seed| lookup(input: seed) }.min
-  end
-end
-
 class InputParser
   attr_reader :input
 
