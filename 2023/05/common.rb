@@ -18,11 +18,30 @@ class MapRange
   end
 
   def [](input)
+    case input
+    when Numeric
+      lookup_numeric(input)
+    when Range
+      lookup_range(input)
+    end
+  end
+
+  def lookup_numeric(input)
     if source_range.cover?(input)
       delta = input - source_range.begin
       destination_range.begin + delta
     else
       nil
+    end
+  end
+
+  def lookup_range(input)
+    if (input.begin >= source_range.begin) && (input.end <= source_range.end) then
+      output_begin = lookup_numeric(input.begin)
+      output_end = lookup_numeric(input.end)
+      (output_begin...output_end)
+    else
+      raise ArgumentError, "Input: #{input} is not within #{source}"
     end
   end
 end
@@ -52,6 +71,15 @@ class Map
       input
     end
     value
+  end
+
+  def lookup_range(input)
+    covering_range = map_ranges.find { |map_range| map_range.cover?(input) }
+    if covering_range then
+      covering_range[input].begin
+    else
+      raise ArgumentError, "Map#lookup: #{input} not covered by a single range"
+    end
   end
 end
 
