@@ -2,14 +2,29 @@
 
 require 'debug'
 
-Coordinate = Data.define(:row, :col)
+Coordinate = Data.define(:row, :col) do 
+  include Comparable
+  def <=>(other)
+    row_result = row.<=>(other.row)
+    return row_result unless row_result.zero?
+    col.<=>(other.col)
+  end
+end
+
 Cell = Data.define(:value, :coordinate) do
+  include Comparable
   def row
     coordinate.row
   end
 
   def col
     coordinate.col
+  end
+
+  def <=>(other)
+    coordinate_result = coordinate.<=>(other.coordinate)
+    return coordinate_result unless coordinate_result.zero?
+    value.<=>(other.value)
   end
 
   def is_dot?
@@ -21,6 +36,10 @@ Cell = Data.define(:value, :coordinate) do
   end
 
   def is_symbol?
+    false
+  end
+
+  def is_potential_gear?
     false
   end
 
@@ -57,11 +76,33 @@ class SymbolCell < Cell
   end
 end
 
+class PotentialGearCell < SymbolCell
+  def is_potential_gear?
+    true
+  end
+end
+
+class Gear
+  def initialize(cell:, parts:)
+    @cell = cell
+    @parts = parts
+  end
+
+  def ratio
+    @parts.map(&:number).reduce(:*)
+  end
+end
+
 class NumberSpan
+  include Comparable
   attr_reader :cells
 
   def initialize(cells: [])
     @cells = cells
+  end
+
+  def ==(other)
+    cells.sort == other.cells.sort
   end
 
   def <<(cell)
@@ -88,19 +129,40 @@ end
 class Schematic
   attr_reader :grid
   attr_reader :number_spans
+  attr_reader :potential_gears
 
   def initialize
     @grid = []
     @number_spans = []
+    @potential_gears = []
+    @part_number_lokup = nil
   end
 
   def add_row(row)
     grid << row
     number_spans.concat(number_spans_from(row))
+    potential_gears.concat(potential_gears_from(row))
   end
 
   def part_numbers
     number_spans.select { |span| symbol_adjacent?(span.adjacent_coordinates) }
+  end
+
+  def part_number_by_coordinate(coordinate)
+    @part_number_lookup ||= build_part_number_lookup
+    @part_number_lookup[coordinate]
+  end
+
+  def gears
+    [].tap do |gear_list|
+      potential_gears.each do |pg|
+        adjacent_parts = pg.adjacent_coordinates.map { |c| part_number_by_coordinate(c) }.compact
+        adjacent_parts.uniq!
+        if adjacent_parts.size == 2 then
+          gear_list << Gear.new(cell: pg, parts: adjacent_parts)
+        end
+      end
+    end
   end
 
   def cell_at(coordinate)
@@ -122,6 +184,8 @@ class Schematic
                          DotCell
                        when "0".."9"
                          NumberCell
+                       when "*"
+                         PotentialGearCell
                        else
                          SymbolCell
                        end
@@ -134,6 +198,10 @@ class Schematic
   end
 
   private
+
+  def potential_gears_from(cells)
+    cells.select { |cell| cell.is_potential_gear? }
+  end
 
   def number_spans_from(cells)
     current_span = nil
@@ -156,6 +224,16 @@ class Schematic
 
     spans
   end
+
+  def build_part_number_lookup
+    {}.tap do |lookup|
+      part_numbers.each do |number|
+        number.cells.each do |cell|
+          lookup[cell.coordinate] = number
+        end
+      end
+    end
+  end
 end
 
 
@@ -166,5 +244,8 @@ schematic = Schematic.parse(ARGF)
 #  #puts "#{is_part} #{s.number}"
 #end
 
+#schematic.gears.each do |g|
+  #puts g
+#end
 puts "Part Number sum: #{schematic.part_numbers.map(&:number).sum}"
-puts "All Number sum: #{schematic.number_spans.map(&:number).sum}"
+puts "Gear Ratios sum: #{schematic.gears.map(&:ratio).sum}"
