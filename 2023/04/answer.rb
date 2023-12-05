@@ -92,6 +92,9 @@ class Part2Scorer
     @cards.values.select { |c| c.winner? }
   end
 
+  # score the cards from highest number to lowest since
+  # no card will have a score from a id that is less than it.
+  # Cache the scores so we can just sum them up at the end
   def final_score
     input = @cards.values.sort_by { |c| c.id }.reverse
     score = 0
