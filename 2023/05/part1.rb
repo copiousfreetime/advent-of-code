@@ -50,4 +50,4 @@ almanac = parser.parse
 
 # currently at 91
 puts "Lowest Location (part 1): #{almanac.lowest_location}"
-# Answer 3374647
+# =>  Lowest Location (part 1): 3374647
