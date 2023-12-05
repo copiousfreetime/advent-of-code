@@ -17,6 +17,10 @@ class MapRange
     source_range.cover?(input)
   end
 
+  def overlap?(other_range)
+    source_range.cover?(other_range.begin) || source_range.cover?(other_range.end)
+  end
+
   def [](input)
     case input
     when Numeric
@@ -76,12 +80,9 @@ class Map
   end
 
   def lookup_range(input)
-    covering_range = map_ranges.find { |map_range| map_range.cover?(input) }
-    if covering_range then
-      covering_range[input].begin
-    else
-      raise ArgumentError, "Map#lookup: #{input} not covered by a single range"
-    end
+    map_ranges.map do |map_range|
+      map_range[input] if map_range.overlap?(input)
+    end.compact
   end
 end
 
