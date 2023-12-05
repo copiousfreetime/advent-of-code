@@ -3,8 +3,8 @@ require 'debug'
 require_relative "./common"
 
 class Almanac < AlmanacBase
-  def locations
-    seeds.map { |seed| lookup(input: seed) }
+  def lowest_location
+    seeds.map { |seed| lookup(input: seed) }.min
   end
 end
 

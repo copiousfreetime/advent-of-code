@@ -74,12 +74,7 @@ class AlmanacBase
     output
   end
 
-  def locations
-    raise NotImplentedError, "#{self.class} must implement #locations"
-    seeds.map { |seed| lookup(input: seed) }
-  end
-
   def lowest_location
-    locations.min
+    raise NotImplentedError, "#{self.class} must implement #lowest_locations"
   end
 end
