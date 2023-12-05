@@ -31,17 +31,19 @@ class MapRange
       delta = input - source_range.begin
       destination_range.begin + delta
     else
-      nil
+      input
     end
   end
 
   def lookup_range(input)
-    if (input.begin >= source_range.begin) && (input.end <= source_range.end) then
-      output_begin = lookup_numeric(input.begin)
-      output_end = lookup_numeric(input.end)
+    if overlap?(input) then
+      overlap_begin = [input.begin, source_range.begin].max
+      overlap_end   = [input.end, source_range.end].min
+      output_begin  = lookup_numeric(overlap_begin)
+      output_end    = lookup_numeric(overlap_end)
       (output_begin...output_end)
     else
-      raise ArgumentError, "Input: #{input} is not within #{source}"
+      input
     end
   end
 end
