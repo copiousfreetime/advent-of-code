@@ -28,7 +28,13 @@ def part_1(races)
   puts "Part 1: #{counts.reduce(:*)}" # 140220
 end
 
+def part_2(races)
+  race_time = races.map(&:race_time).join("").to_i
+  record_distance = races.map(&:record_distance).join("").to_i
+  big_race = Race.new(race_time: race_time, record_distance: record_distance)
+  combos = winning_combos(big_race)
+  puts "Part 2: #{combos.count}"
+end
 
 part_1(races)
-
-
+part_2(races)
