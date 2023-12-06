@@ -9,7 +9,7 @@ races = race_times.map.with_index do |t, i|
   Race.new(race_time: t, record_distance: record_distances[i])
 end
 
-def part_1_winning_combos(race)
+def winning_combos(race)
   race_time = race.race_time.to_i
   record_distance = race.record_distance.to_i
 
@@ -24,7 +24,7 @@ def part_1_winning_combos(race)
 end
 
 def part_1(races)
-  counts = races.map { |race| part_1_winning_combos(race).count }
+  counts = races.map { |race| winning_combos(race).count }
   puts "Part 1: #{counts.reduce(:*)}" # 140220
 end
 
