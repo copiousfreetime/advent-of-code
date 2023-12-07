@@ -6,3 +6,4 @@
 - [Day 04](https://adventofcode.com/2023/day/4) - [answer](./04/answer.rb)
 - [Day 05](https://adventofcode.com/2023/day/5) - [part1](./05/part1.rb), [part2](./05/part2.rb)
 - [Day 06](https://adventofcode.com/2023/day/6) - [answer](./06/answer.rb)
+- [Day 07](https://adventofcode.com/2023/day/7) - [answer](./07/answer.rb)
