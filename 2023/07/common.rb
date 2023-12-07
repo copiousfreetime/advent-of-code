@@ -1,12 +1,3 @@
-#!/usr/bin/env ruby
-
-Dealer = ARGF.readlines.map(&:strip)
-
-# Part 1
-Part1Labels = %w[2 3 4 5 6 7 8 9 T J Q K A]
-Part2Labels = %w[J 2 3 4 5 6 7 8 9 T Q K A]
-
-Labels = Part2Labels
 
 module ValueComparable
   include Comparable
@@ -17,12 +8,6 @@ end
 
 Card = Data.define(:label, :value) do
   include ValueComparable
-end
-
-Deck = {}.tap do |d|
-  Labels.each.with_index do |l, i|
-    d[l] = Card.new(label: l, value: i)
-  end
 end
 
 HandType = Data.define(:name, :value) do
@@ -80,24 +65,8 @@ class Hand
     @type = TypeDetector.(self)
   end
 
-  # group - but now take care of jokers
   def grouped(cards)
-    groups = cards.group_by { |c| c.label }
-
-    # quick test to see if there is only 1 key and it is 'J'
-    return groups if groups.keys == %w[ J ]
-
-    j = groups.delete('J')
-
-    # if here are any jokers, then add the jokers to the group with the higest
-    # count
-    if j then
-      counts_cards = groups.values.map { |cards| [cards.size, cards.first] }
-      _size, best_card = counts_cards.sort.last
-      debugger if best_card.nil?
-      groups[best_card.label].concat(j)
-    end
-    groups
+    cards.group_by { |c| c.label }
   end
 
   def to_s
@@ -124,15 +93,29 @@ class Hand
   end
 end
 
-hands = Dealer.map do |deal|
-  labels, bid = deal.split(/\s+/)
-  cards = labels.chars.map { |c| Deck[c] }
-  Hand.new(cards: cards, bid: bid.to_i)
+class Dealer
+  def initialize(input: ARGF, deck_labels:)
+    @input = input
+    @deck = generate_deck(deck_labels)
+  end
+
+  def deal
+    @input.readlines.map do |deal|
+      labels, bid = deal.strip.split(/\s+/)
+      cards = labels.chars.map { |c| @deck[c] }
+      Hand.new(cards: cards, bid: bid.to_i)
+    end
+  end
+
+  private
+
+  def generate_deck(labels)
+    {}.tap do |d|
+      labels.each.with_index do |l, i|
+        d[l] = Card.new(label: l, value: i)
+      end
+    end
+  end
 end
 
-# smallest first -- so hands now have effectively their rank which is their
-# index + 1
-sorted = hands.sort
-hand_scores = sorted.map.with_index { |hand, i| hand.bid * (i + 1) }
 
-puts "Part 2 Total Winnings: #{hand_scores.sum}"
