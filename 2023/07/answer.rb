@@ -1,7 +1,12 @@
 #!/usr/bin/env ruby
 
 Dealer = ARGF.readlines.map(&:strip)
-Labels = %w[2 3 4 5 6 7 8 9 T J Q K A]
+
+# Part 1
+Part1Labels = %w[2 3 4 5 6 7 8 9 T J Q K A]
+Part2Labels = %w[J 2 3 4 5 6 7 8 9 T Q K A]
+
+Labels = Part2Labels
 
 module ValueComparable
   include Comparable
@@ -69,10 +74,30 @@ class Hand
     @original_cards = cards
     @cards = cards.sort.reverse
     @bid = bid.to_i
-    @grouped = cards.group_by { |c| c.label }
+    @grouped = grouped(cards)
     @distinct_cards = @grouped.size
     @most_cards = @grouped.values.map(&:size).max
     @type = TypeDetector.(self)
+  end
+
+  # group - but now take care of jokers
+  def grouped(cards)
+    groups = cards.group_by { |c| c.label }
+
+    # quick test to see if there is only 1 key and it is 'J'
+    return groups if groups.keys == %w[ J ]
+
+    j = groups.delete('J')
+
+    # if here are any jokers, then add the jokers to the group with the higest
+    # count
+    if j then
+      counts_cards = groups.values.map { |cards| [cards.size, cards.first] }
+      _size, best_card = counts_cards.sort.last
+      debugger if best_card.nil?
+      groups[best_card.label].concat(j)
+    end
+    groups
   end
 
   def to_s
@@ -107,10 +132,7 @@ end
 
 # smallest first -- so hands now have effectively their rank which is their
 # index + 1
-puts "Input of #{hands.size} hands"
-puts "================"
 sorted = hands.sort
-puts sorted
 hand_scores = sorted.map.with_index { |hand, i| hand.bid * (i + 1) }
 
-puts "Part 1 Total Winnings: #{hand_scores.sum}"
+puts "Part 2 Total Winnings: #{hand_scores.sum}"
