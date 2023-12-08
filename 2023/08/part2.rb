@@ -2,10 +2,12 @@
 require 'debug'
 
 # Load input
-input      = ARGF.readlines.map(&:strip)
+input = ARGF.readlines.map(&:strip)
+width = 23
 
 # parse directions into array
 DIRECTIONS = input[0].split(//).compact
+puts "#{"Directions".ljust(width)}: #{DIRECTIONS.length}"
 
 # createa regex to match the node lines
 MATCHER = /\A(?<label>\w+)\s+=\s+\((?<L>\w+),\s(?<R>\w+)\)\Z/
@@ -28,18 +30,17 @@ START       = "A"
 FINISH      = "Z"
 START_NODES = NODE_LIST.select { |n| n["label"].end_with?(START) }
 
-puts "Starting node count: #{START_NODES.size}"
+puts "#{"Starting node count".ljust(width)}: #{START_NODES.size}"
 
-# so we don't have to iterator for a long time, we want to find each starting
-# nodes z-cycle time. Going to assume that they all have a cycle, so go through
-# each one, finding its 1st Z, and then seeing how long it gets to its 2nd Z
+# so we don't have to iterate for a long time, we want to find each starting
+# nodes cycle time. Going to assume that they all have a cycle, and it repeats
+# with the same length starting from the beginning
 def z_cycle_count(node)
   current_node = node
 
   count = 0
   DIRECTIONS.cycle do |p|
     next_label = current_node[p]
-#    puts "#{p} => #{next_label} : #{count}"
     count     += 1
     break if next_label.end_with?(FINISH)
     current_node = NODE_HASH[next_label]
@@ -48,10 +49,10 @@ def z_cycle_count(node)
   return count
 end
 
-# brute force factoring
+# brute force factoring, do not include 1 and self
 def factors_of(number)
   limit = number / 2
-  [ number ].tap do |factors|
+  [ ].tap do |factors|
     (2..limit).select do |attempt|
       if (number % attempt).zero? then
         factors << attempt
@@ -61,34 +62,19 @@ def factors_of(number)
 end
 
 results = {}
-lcm = nil
-gcm = 1
+least_common_multiples = []
 
 START_NODES.each do |node|
   count = z_cycle_count(node)
   factors = factors_of(count)
-  gcm = gcm * count
 
   results[node['label']] = {
     count: count,
     factors: factors,
   }
 
-  if lcm.nil? then
-    lcm = factors
-  else
-    lcm = lcm & factors
-    puts lcm
-  end
+  least_common_multiples |= factors
 end
 
-# and now find the least common multiple of the counts
-pp results
-count = nil
-if lcm.empty? then
-  count = gcm
-else
-  count = lcm.sort.first
-end
-#puts "Count: #{count_hash.values.reduce(:*)}"
-puts "Count: #{count}"
+puts "#{"Least Common Multiples".ljust(width)}: #{least_common_multiples}"
+puts "#{"Steps".ljust(width)}: #{least_common_multiples.reduce(:*)}"
