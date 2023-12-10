@@ -1,6 +1,13 @@
 #!/usr/bin/env ruby
-
+require 'bundler/inline'
 require 'debug'
+
+gemfile do
+  source 'https://rubygems.org'
+  gem 'pastel'
+  gem 'tty-cursor'
+end
+
 
 Coordinate = Data.define(:row, :col) do
   def north
@@ -20,15 +27,18 @@ Coordinate = Data.define(:row, :col) do
   end
 end
 
-LabelConnections = {
-  '|' => [:north, :south],
-  '-' => [:east, :west],
-  'L' => [:north, :east],
-  'J' => [:north, :west],
-  '7' => [:south, :west],
-  'F' => [:south, :east],
-  '.' => [],
-  'S' => [:north, :south, :east, :west]
+
+LabelMeta =  {
+  '|' => { directions: [:north, :south], display: "│" },
+  '-' => { directions: [:east,  :west],  display: "─" },
+  'L' => { directions: [:north, :east],  display: "└" },
+  'J' => { directions: [:north, :west],  display: "┘" },
+  '7' => { directions: [:south, :west],  display: "┐" },
+  'F' => { directions: [:south, :east],  display: "┌" },
+  '.' => { directions: [],               display: " " },
+  'S' => { directions: [:north, :south, :east, :west], display: "*" },
+  'I' => { directions: [], display: "I" },
+  'O' => { directions: [], display: "O" },
 }
 
 Connectors = {
@@ -43,12 +53,32 @@ class Tile
   attr_reader :label
   attr_reader :outward
   attr_reader :inward
+  attr_accessor :role
 
   def initialize(coordinate:, label:)
     @coordinate = coordinate
     @label      = label
-    @outward    = LabelConnections[@label]
+    @outward    = LabelMeta[@label][:directions]
     @inward     = @outward.map { |c| Connectors[c] }
+    @role       = nil
+  end
+
+  def meta_for_role(role)
+    case role
+    when :ground
+      LabelMeta["."]
+    when :inside
+      LabelMeta["I"]
+    when :outside
+      LabelMeta["O"]
+    else # edges and everything else
+      LabelMeta[label]
+    end
+  end
+
+  def display
+    meta = meta_for_role(role)
+    meta[:display]
   end
 
   def outward_coords
@@ -92,7 +122,7 @@ class Ground
   end
 
   def to_s
-    @grid.map { |row| row.map(&:label).join('') }.join("\n")
+    @grid.map { |row| row.map(&:display).join('') }.join("\n")
   end
 end
 
@@ -152,6 +182,7 @@ end
 puts "Rows: #{ground.row_count}"
 puts "Cols: #{ground.col_count}"
 puts "Start: #{start}"
+puts ground.to_s
 
 walker = Walker.new(ground: ground, start: start)
 path = walker.walk
