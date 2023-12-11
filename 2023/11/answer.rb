@@ -71,10 +71,6 @@ class Cosmos
     @grid.first.map { |c| c.width }.sum
   end
 
-  def fetch(row:, col:)
-    @grid[row][col]
-  end
-
   def place(row:, col:, label:)
     tile = Tile.new(row: row, col: col)
     if label == "#" then
@@ -83,10 +79,6 @@ class Cosmos
       @galaxies << tile
     end
     @grid[row][col] = tile
-  end
-
-  def [](row_coord)
-    @grid[row_coord]
   end
 
   def rows
