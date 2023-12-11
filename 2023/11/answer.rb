@@ -9,8 +9,8 @@ gemfile do
 end
 
 class Tile
-  attr_reader :row
-  attr_reader :col
+  attr_accessor :row
+  attr_accessor :col
   attr_accessor :id
 
   def initialize(row:, col:, id: nil)
@@ -35,6 +35,7 @@ end
 class Cosmos
   attr_reader :initial_row_count
   attr_reader :initial_col_count
+  attr_reader :galaxies
 
   def initialize(row_count:, col_count:)
     @initial_row_count = row_count
@@ -56,7 +57,7 @@ class Cosmos
   end
 
   def place(row:, col:, label:)
-    tile = Tile.new(row:, col:)
+    tile = Tile.new(row: row, col: col)
     if label == "#" then
       id = @galaxies.size
       tile.id = id
@@ -79,6 +80,16 @@ class Cosmos
 
   def expand
     @grid = expand_cols(expand_rows(@grid))
+    update_tile_coordinates
+  end
+
+  def update_tile_coordinates
+    @grid.each.with_index do |row, row_coord|
+      row.each.with_index do |tile, col_coord|
+        tile.row = row_coord
+        tile.col = col_coord
+      end
+    end
   end
 
   private
@@ -121,3 +132,4 @@ puts
 puts cosmos.to_s
 puts "#{cosmos.row_count} X #{cosmos.col_count}"
 
+puts cosmos.galaxies.map(&:inspect)
