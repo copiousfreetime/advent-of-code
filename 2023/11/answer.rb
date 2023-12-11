@@ -27,6 +27,12 @@ class Tile
     !galaxy?
   end
 
+  def distance_from(tile)
+    row_delta = (row - tile.row).abs
+    col_delta = (col - tile.col).abs
+    (col_delta + row_delta)
+  end
+
   def to_s
     galaxy? ? "#" : "."
   end
@@ -44,6 +50,14 @@ class Cosmos
     @galaxies = []
   end
 
+  def galaxy_pairs
+    galaxies.combination(2)
+  end
+
+  def distances
+    galaxy_pairs.map { |a,b| a.distance_from(b) }
+  end
+
   def row_count
     @grid.size
   end
@@ -59,7 +73,7 @@ class Cosmos
   def place(row:, col:, label:)
     tile = Tile.new(row: row, col: col)
     if label == "#" then
-      id = @galaxies.size
+      id = @galaxies.size + 1
       tile.id = id
       @galaxies << tile
     end
@@ -132,4 +146,7 @@ puts
 puts cosmos.to_s
 puts "#{cosmos.row_count} X #{cosmos.col_count}"
 
-puts cosmos.galaxies.map(&:inspect)
+# cosmos.galaxy_pairs.each do |a,b|
+#   puts "Between galaxy #{a.id} and galaxy #{b.id}: #{a.distance_from(b)}"
+# end
+puts cosmos.distances.sum
