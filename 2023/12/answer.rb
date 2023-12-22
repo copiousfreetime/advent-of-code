@@ -4,31 +4,75 @@ require 'debug'
 
 total = 0
 
+CACHE = {}
+def arrangements_line(record:, groups:)
+  if cached = CACHE[[record, groups]]
+    return cached
+  end
+
+  #puts "record: #{record} groups: #{groups}"
+  if record.empty? && groups.empty? then
+    return 1
+  end
+
+  if  record.empty? && groups.any? then
+    return 0
+  end
+
+  if groups.empty? && !record.include?('#') then
+    return 1
+  end
+
+  if groups.empty? then
+    return 0
+  end
+
+  char, rest = record[0], record[1..-1]
+
+  case char
+  when "."
+    return arrangements_line(record: rest, groups: groups)
+
+  # '#' means we are counting if we have the current group
+  when "#"
+    g_size = groups.first
+    return 0 unless record.length >= g_size # bail if we can't make the size
+    return 0 if record[0,g_size].include?(".") # bail since theres no potential to match
+
+    # we're probably at the end - but values are returned when nothing is left
+    if (record.length == g_size) then
+      #puts "going down -- probably to terminate"
+      return arrangements_line(record: record[g_size..-1], groups: groups[1..-1])
+    # if the next item isn't a '#' then we can move to the next group
+    elsif (record[g_size] != '#')
+      #puts "going down -- #{record} #{g_size} #{record[g_size]}"
+      return arrangements_line(record: record[(g_size+1)..-1], groups: groups[1..-1])
+    end
+
+    return 0
+  when "?"
+    hash_count = arrangements_line(record: "##{rest}", groups: groups, )
+    dot_count  = arrangements_line(record: ".#{rest}", groups: groups)
+    return (hash_count + dot_count)
+  else
+    raise "oops! #{char}"
+  end
+
+end
+
+total = 0
 ARGF.each_line do |line|
   spring_raw, checks_raw = line.strip.split(/\s+/, 2)
-  encoded = spring_raw.tr('.#','01')
 
-  questions       = encoded.count('?')
-  spring_template = encoded.gsub('?', '%d')
-  groups          = checks_raw.split(/,/)
-                               .map {  |n| "1{#{n}}" }
-                               .join("0+")
-  checks_regex    = Regexp.new("^0*#{groups}0*$")
+  spring_raw = Array.new(5) { spring_raw }.join('?')
+  checks_raw = Array.new(5) { checks_raw }.join(",")
 
-  start = ("0"*questions).to_i(2)
-  finish = ("1"*questions).to_i(2)
+  checks = checks_raw.split(",").map(&:to_i)
 
-  puts "start: #{start} -> #{finish} : #{checks_raw} -> #{checks_regex}"
-  (start..finish).each do |n|
-    values = ("%0.#{questions}b" % n).chars
-    spring = spring_template % values
-    #pu7260ts spring
-    if spring =~ checks_regex then
-      decoded = spring.tr('01','.#')
-      total += 1
-      #puts "#{spring} / #{decoded} ~= #{checks_raw} / #{checks_regex}"
-      #puts "Q: #{questions} T: #{spring_template} R: #{checks_regex.source} O: #{options}"
-    end
-  end
+  row_total = arrangements_line(record: spring_raw, groups: checks)
+  puts "#{row_total} : #{spring_raw} #{checks}"
+  #row_total = arrangements(part2_s, part2_c)
+
+  total += row_total
 end
 puts total
