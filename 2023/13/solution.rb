@@ -2,98 +2,70 @@
 require 'debug'
 chunks = ARGF.read.split("\n\n")
 
-class RowCol
-  attr_reader :value
-  attr_reader :index
-
-  def initialize(value:, index:)
-    @value = value
-    @index = index
-  end
-
-  def ==(other)
-    self.value == other.value
-  end
-
-  def length
-    @value.length
-  end
-
-  def to_a
-    @value.chars
-  end
-end
+PART1 = 30705
 
 class Field
-  attr_reader :rows
+  attr_reader :grid
 
   def initialize(raw:)
     @raw = raw
-    @rows = @raw.split("\n").map.with_index { |r,i| RowCol.new(value: r, index: i) }
+    @grid = @raw.split("\n").map(&:chars)
   end
 
   def row_count
-    @rows.size
+    @grid.length
   end
 
   def col_count
-    @row.first.length
+    @grid.first.length
   end
 
-  def convert_rows_to_cols
-    matrix = rows.map(&:to_a).transpose
-    matrix.map.with_index do |r, i|
-      RowCol.new(value: r.join(""), index: i)
+  def score(diff: 0)
+    h_index = line_of_symmetry(grid:, diff:)
+    if h_index then
+      return 100 * (h_index + 1)
     end
+
+    tgrid = grid.transpose
+    v_index = line_of_symmetry(grid: tgrid, diff:)
+    return v_index + 1
   end
 
-  def score
-    if top_score = reflective_score(rows: @rows) then
-      return top_score * 100
-    elsif bottom_score = reflective_score(rows: @rows.reverse)
-      return (rows.length - bottom_score) * 100
-    else
-      cols = convert_rows_to_cols
-      if left_score = reflective_score(rows: cols)
-        return left_score
-      elsif right_score = reflective_score(rows: cols.reverse)
-        return (cols.length - right_score)
-      else
-        debugger
-        raise "boom!"
+  def row_delta(a:, b:)
+    delta = 0
+    a.each.with_index do |e, i|
+      delta += 1 if e != b[i]
+    end
+    return delta
+  end
+
+  def line_of_symmetry(grid:, diff:)
+    (0...(grid.length-1)).each do |split_index|
+
+      top = grid[0..split_index]
+      bottom = grid[split_index+1..-1]
+
+      compare_length = [top.length, bottom.length].min
+
+      top = top.reverse[0, compare_length]
+      bottom = bottom[0, compare_length]
+
+      delta = 0
+      top.each.with_index do |t, i|
+        delta += row_delta(a: t, b: bottom[i])
       end
+      return split_index if delta == diff
     end
-  end
-
-  def fold_check(rows:, left_index:)
-    right_index = left_index + 1
-    fold_length = [ (left_index + 1), (rows.length - right_index)].min
-    good = false
-    fold_length.times do |l|
-      return false unless (rows[left_index-l] == rows[right_index+l])
-    end
-    return true
-  end
-
-  def reflective_score(rows: )
-    score = nil
-
-    rows.each_cons(2) do |a,b|
-      if (a == b) && fold_check(rows:, left_index: a.index) then
-        score = b.index
-        break
-      end
-    end
-
-    return score
+    return nil
   end
 end
 
-total = 0
-chunks.each do |c|
-  field = Field.new(raw: c)
-  score = field.score
-  puts score
-  total += score
+[ 0 , 1 ].each do |diff|
+  total = 0
+  chunks.each do |c|
+    field = Field.new(raw: c)
+    score = field.score(diff:)
+    total += score
+  end
+  puts "Diff: #{diff} Total: #{total}"
 end
-puts total
