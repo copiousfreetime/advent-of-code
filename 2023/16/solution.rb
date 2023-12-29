@@ -58,6 +58,10 @@ class Tile
     @energized.any?
   end
 
+  def drain_energy
+    @energized.clear
+  end
+
   def activate(from_coord)
     return [] if @energized.include?(from_coord)
     @energized << from_coord
@@ -218,9 +222,22 @@ class Grid
     @tiles[row]
   end
 
+
+  def drain_energy
+    @tiles.map { |row| row.map(&:drain_energy) }
+  end
+
   def fetch(coord)
     raise KeyError, "Out of bounds #{coord}" unless in_bounds?(coord)
     @tiles[coord.row][coord.col]
+  end
+
+  def fetch_row(row)
+    @tiles[row]
+  end
+
+  def fetch_col(col)
+    @tiles.map { |r| r[col] }
   end
 
   def to_s
@@ -288,8 +305,27 @@ end
 lines = ARGF.readlines
 grid = Grid.new(lines)
 walker = Walker.new(grid: grid)
-walker.traverse
 
-puts grid.to_display
+max_energy = 0
+max_location = nil
 
-puts grid.energized_count
+[ [ :up, grid.fetch_row(0) ],
+  [ :left, grid.fetch_col(0) ],
+  [ :right, grid.fetch_row(-1) ],
+  [ :down, grid.fetch_col(-1) ]
+].each do | from, start_tiles |
+  start_tiles.each do |start_tile|
+    grid.drain_energy
+    raise :boom unless grid.energized_count == 0
+    start = start_tile.coordinate
+    walker.traverse(start:, from:)
+    energy = grid.energized_count
+    if energy > max_energy then
+      max_energy = energy
+      max_location = start
+      puts "Current max -> start: #{start} from: #{from} energy: #{energy}"
+    end
+  end
+end
+
+puts max_energy
